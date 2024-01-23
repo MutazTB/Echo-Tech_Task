@@ -1,0 +1,153 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    ViewData["Title"] = "Login";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Custom CSS */
+        .status-green {
+            color: white;
+            background-color: #28a745;
+        }
+
+        .status-red {
+            color: white;
+            background-color: #dc3545;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-5">
+        @if (User.IsInRole("Admin"))
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>NO</th>
+                        <th>User Name</th>
+                        <th>Complaint Title</th>
+                        <th>Complaint Description</th>
+                        <th>Actions</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id"complaintsTable">
+                    <!-- Sample data rows (replace with your dynamic content) -->
+                    @*<tr>
+                <td>1</td>
+                <td>John Doe</td>
+                <td>Delay in Service</td>
+                <td>Service delivery was delayed beyond the promised time.</td>
+                <td>
+                <button class="btn btn-success">Approve</button>
+                <button class="btn btn-danger">Reject</button>
+                <button class="btn btn-primary">View Details</button>
+                </td>
+                <td><span class="badge status-green">Approved</span></td>
+                </tr>
+                <tr>
+                <td>2</td>
+                <td>Jane Smith</td>
+                <td>Product Quality Issue</td>
+                <td>Received a damaged product with poor quality.</td>
+                <td>
+                <button class="btn btn-success">Approve</button>
+                <button class="btn btn-danger">Reject</button>
+                <button class="btn btn-primary">View Details</button>
+                </td>
+                <td><span class="badge status-red">Rejected</span></td>
+                </tr>*@
+                    <!-- More rows can be added dynamically -->
+                </tbody>
+            </table>
+        }
+    </div>
+
+</body>
+
+</html>
+<script src="~/lib/jquery/dist/jquery.js"></script>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@if (User.IsInRole("Admin"))
+{
+    <script>
+
+        $(document).ready(function () {
+
+            GetAllComplaints();
+        });
+        function GetAllComplaints() {
+            $.ajax({
+                url: '/Complaints/GetAll',
+                type: 'GET',
+                dataType: "json",
+                success: function (result) {
+                    $.each(result.data, function (index, complaint) {
+                        var statusClass = complaint.status == '1' ? 'status-green' : 'status-red';
+                        var newRow = "";
+                        newRow = '<tr>' +
+                            '<td>' + index++ + '</td>' +
+                            '<td>' + complaint.userId + '</td>' +
+                            '<td>' + complaint.title + '</td>' +
+                            '<td>' + complaint.description + '</td>' +
+                            '<td>' +
+                            '<button class="btn btn-success" data_Id="' + complaint.id + '">Approve</button>' +
+                            '<button class="btn btn-danger" data_Id="' + complaint.id + '">Reject</button>' +
+                            '<button class="btn btn-primary" data_Id="' + complaint.id + '">View Details</button>' +
+                            '</td>' +
+                            '<td><span class="badge ' + statusClass + '">' + complaint.status + '</span></td>' +
+                            '</tr>';
+                        $('#complaintsTable').append(newRow);
+                    });
+                },
+                error: function (xhr, status, error) {
+                    Swal.fire('Error!', 'Somthing went wrong..!!', 'error');
+                }
+            });
+        }
+        $(document).on("click", "#Approve", function () {
+            var Id = $(this).attr('data_Id');
+            ApproveComplaint(Id);
+        });
+        $(document).on("click", "#Reject", function () {
+            var Id = $(this).attr('data_Id');
+            RejctComplaint(Id);
+        });
+        $(document).on("click", "#Details", function () {
+            var Id = $(this).attr('data_Id');
+            ApproveComplaint(Id);
+        });
+        function ApproveComplaint(Id) {
+            $.ajax({
+                url: "/Complaints/Approve/Id=" + Id,
+                type: "POST",
+                contentType: "application/json",
+                success: function (data) {
+                    swal("Success", data.Message, "success");
+                },
+                error: function (err) {
+                    swal('Oops...', 'Something went wrong!', 'error');
+                }
+            })
+        }
+        function RejctComplaint(Id) {
+            $.ajax({
+                url: "/Complaints/Reject/Id=" + Id,
+                type: "POST",
+                contentType: "application/json",
+                success: function (data) {
+                    swal("Success", data.Message, "success");
+                },
+                error: function (err) {
+                    swal('Oops...', 'Something went wrong!', 'error');
+                }
+            })
+        }
+    </script>
+}
